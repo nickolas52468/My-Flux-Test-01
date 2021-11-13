@@ -11,5 +11,14 @@ public class CallScene : MonoBehaviour {
     {
         GameObject.Instantiate(Resources.Load(Statics.PREFAB_LOAD) as GameObject);
         SceneManager.LoadScene(sname);
+        GameData Stats = new GameData(
+                Statics.WithShield,
+                Statics.EnemiesDead,
+                Statics.CurrentLevel,
+                Statics.Points,
+                Statics.ShootingSelected
+            );
+
+        SaveSystem.SaveGame(Stats);
     }
 }

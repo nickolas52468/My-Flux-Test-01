@@ -11,7 +11,7 @@ public class ControlGame : MonoBehaviour {
     [Header("UI")]
     public Text TextStart;
     public Text TextPoints;
-    public Transform BarLife;
+    public Transform BarLife,BarShield;
     
     // Use this for initialization
     void Start () {
@@ -19,20 +19,18 @@ public class ControlGame : MonoBehaviour {
         Background.sprite = Levels[Statics.CurrentLevel].Background;
         TextStart.text = "Stage " + (Statics.CurrentLevel + 1);
         GetComponent<AudioSource>().PlayOneShot(Levels[Statics.CurrentLevel].AudioLvl);
+        GetComponent<AudioSource>().clip = Levels[Statics.CurrentLevel].AudioLvl;
     }
 
     private void Update()
     {
-        bool witdShield = Statics.WithShield;
-        int enemiesDead = Statics.EnemiesDead;
-        int currentLevel = Statics.CurrentLevel;
-        int points = Statics.Points;
-        int shootingSelected = Statics.ShootingSelected;
-        GameData data = new GameData(witdShield, enemiesDead, currentLevel, points, shootingSelected);
-        SaveSystem.SaveGame(data);
+        
+        
 
         TextPoints.text = Statics.Points.ToString();
         BarLife.localScale = new Vector3(Statics.Life / 10f, 1, 1);
+        BarShield.localScale = new Vector3(Statics.Shield / 10f, 1, 1);
+
     }
 
     public void LevelPassed()
@@ -41,6 +39,17 @@ public class ControlGame : MonoBehaviour {
         Clear();
         Statics.CurrentLevel++;
         Statics.Points += 1000 * Statics.CurrentLevel;
+
+        GameData Stats = new GameData(
+                Statics.WithShield,
+                Statics.EnemiesDead,
+                Statics.CurrentLevel,
+                Statics.Points,
+                Statics.ShootingSelected
+            );
+
+        SaveSystem.SaveGame(Stats);
+
         if (Statics.CurrentLevel < 3)
         {
             GameObject.Instantiate(Resources.Load(Statics.PREFAB_LEVELUP) as GameObject);
@@ -56,7 +65,18 @@ public class ControlGame : MonoBehaviour {
         BarLife.localScale = new Vector3(0, 1, 1);
         Clear();
         Destroy(Statics.Player.gameObject);
-        GameObject.Instantiate(Resources.Load(Statics.PREFAB_GAMEOVER) as GameObject);
+        Instantiate(Resources.Load(Statics.PREFAB_GAMEOVER) as GameObject);
+        Statics.GhostPlayer.gameObject.SetActive(false);
+
+        GameData Stats = new GameData(
+                Statics.WithShield, 
+                Statics.EnemiesDead, 
+                Statics.CurrentLevel, 
+                Statics.Points, 
+                Statics.ShootingSelected
+            );
+
+        SaveSystem.SaveGame(Stats);
     }
     private void Clear()
     {

@@ -2,31 +2,71 @@ using UnityEngine;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 public static class SaveSystemData {
     
     public static void SaveGame(GameData data)
     {
-        BinaryFormatter formatter = new BinaryFormatter();
-        string path = Application.persistentDataPath + "/game.save";
-        FileStream stream = new FileStream(path, FileMode.Create);
+        var buffer = new MemoryStream();
+        var writer = new BinaryWriter(buffer);
 
-        formatter.Serialize(stream, data);
-        stream.Dispose();
-        //Debug.Log("Foi salvo!");
+
+        byte[] _data;
+
+
+        writer.Write(data.CurrentLevel);
+        writer.Write(data.Points);
+        writer.Write(data.ShootingSelected);
+        writer.Write(data.EnemiesDead);
+        writer.Write(data.WithShield);
+
+        writer.Close();
+
+
+        _data = buffer.ToArray();
+
+
+        string path = $"{Application.persistentDataPath}/GInfos.NSEData";
+
+        File.WriteAllBytes(path, _data);
     }
 
 
     public static GameData LoadGame()
     {
-        string path = Application.persistentDataPath + "/game.save";
+        string path = $"{Application.persistentDataPath}/GInfos.NSEData";
+
+        var buffer = new MemoryStream();
         if (File.Exists(path))
         {
             BinaryFormatter formatter = new BinaryFormatter();
             FileStream stream = new FileStream(path, FileMode.Open);
 
-            GameData data = formatter.Deserialize(stream) as GameData;
-            stream.Dispose();
+            byte[] _datas = File.ReadAllBytes(path);
+
+            GameData data =  new GameData(false,0,0,0,0);
+
+            try
+            {
+
+                using (BinaryReader reader = new BinaryReader(stream))
+                {
+                    //reading Sequential:
+                    data.CurrentLevel = reader.ReadInt32();
+                    data.Points = reader.ReadInt32();
+                    data.ShootingSelected = reader.ReadInt32();
+                    data.EnemiesDead = reader.ReadInt32();
+                    data.WithShield = reader.ReadBoolean();
+                }
+            }
+            catch {
+                Debug.LogError("algo deu errado!");
+            }
+
+            //    data = formatter.Deserialize(stream) as GameData;
+            //stream.Dispose();
 
             //Debug.Log("Foi carregado!");
             return data;
@@ -39,59 +79,5 @@ public static class SaveSystemData {
         
     }
 
-    /*
-    public static bool loadGame = false;
-    public static int count;
-
-    public static void startLoading()
-    {
-        loadGame = true;
-    }
-
-    public static bool hasToLoad()
-    {
-        return loadGame;
-    }
-
-    public static void SaveGame (ControlGame game)
-    {
-        BinaryFormatter formatter = new BinaryFormatter();
-        string path = Application.persistentDataPath + "/game.save";
-        FileStream stream = new FileStream(path, FileMode.Create);
-
-        GameData data = new GameData(game);
-
-        formatter.Serialize(stream, data);
-        stream.Dispose();
-    }
-
-    public static void SaveShip (ControlShip controlShip) {
-        BinaryFormatter formatter = new BinaryFormatter();
-        string path = Application.persistentDataPath + "/ship.main";
-        FileStream stream = new FileStream(path, FileMode.Create);
-
-        ShipData data = new ShipData(controlShip);
-
-        formatter.Serialize(stream, data);
-        stream.Dispose();
-    }
-
-    public static ShipData LoadShip () {
-        string path = Application.persistentDataPath + "/ship.main";
-        if(File.Exists(path)) {
-            BinaryFormatter formatter = new BinaryFormatter();
-            FileStream stream = new FileStream(path, FileMode.Open);
-
-            ShipData data = formatter.Deserialize(stream) as ShipData;
-            stream.Dispose();
-
-            return data;
-
-        } else {
-            Debug.LogError("Save file not found in " + path);
-            return null;
-        }
-    }
-    */
 
 }

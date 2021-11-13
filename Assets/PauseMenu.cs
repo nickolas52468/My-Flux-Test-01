@@ -4,35 +4,35 @@ using UnityEngine;
 
 public class PauseMenu : MonoBehaviour {
 
-    public static bool GameIsPaused = false; 
-    public GameObject pauseMenuIU;
-    public GameObject MainCamera;    
+    bool paused=false;
 
-    void Update()
+    [SerializeField] GameObject PauseMenuObject;
+    
+
+    private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape)){
-            if (GameIsPaused) {
-                Resume();
-            } 
-            else {
-                Pause();
-            }
+        if (Input.GetKeyDown(KeyCode.Escape)) DOPauseGame();
+    }
+
+    void DOPauseGame()
+    {
+        if (!PauseMenuObject)
+        {
+            Debug.LogError("PauseMenuObject not defined!");return;
         }
-    }
+        Time.timeScale = paused ? 1 : 0;
+        paused = !paused;
 
-    void Resume () 
-    {
-        pauseMenuIU.SetActive(false);
-        MainCamera.GetComponent<AudioListener>().enabled = true;
-        Time.timeScale = 1f;
-        GameIsPaused = false;
-    }
+        PauseMenuObject.SetActive(paused);
 
-    void Pause () 
-    {
-        pauseMenuIU.SetActive(true);
-        MainCamera.GetComponent<AudioListener>().enabled = false;
-        Time.timeScale = 0f;
-        GameIsPaused = true;
+        if (paused)
+        
+            GameObject.FindWithTag("GameController").GetComponent<AudioSource>().Pause();
+        
+        else
+            GameObject.FindWithTag("GameController").GetComponent<AudioSource>().UnPause();
+
+         
+
     }
 }

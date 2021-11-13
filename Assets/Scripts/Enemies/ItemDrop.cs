@@ -13,6 +13,7 @@ public class ItemDrop : MonoBehaviour {
             {
                 case Statics.TYPE_DROP.SHIELD:
                     Statics.WithShield = true;
+                    Statics.Shield = 10;
                     break;
                 case Statics.TYPE_DROP.SHOT1:
                     Statics.ShootingSelected = 0;

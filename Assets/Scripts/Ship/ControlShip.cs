@@ -49,6 +49,8 @@ public class ControlShip : MonoBehaviour
         startPos = transform.localPosition;
         Statics.Player = gameObject.transform;
 
+        //Statics.GhostPlayer.gameObject.SetActive(Statics.withGost);
+
         if (GetComponent<Rigidbody2D>() == null)
         {
             Debug.LogError("Component required Rigidbody2D");
@@ -66,7 +68,14 @@ public class ControlShip : MonoBehaviour
         GetComponent<Rigidbody2D>().gravityScale = 0.001f;
         StartCoroutine(Shoot());
     }
-    
+
+    public GameObject ActiveProjectile_Prefab => Shots[Statics.ShootingSelected].Prefab;
+    public float ActiveProjectile_Speed => Shots[Statics.ShootingSelected].SpeedShooter;
+    public float ActiveProjectile_Delay => Shots[Statics.ShootingSelected].ShootingPeriod;
+
+
+    public void SetBulletDamage() => Statics.Damage = Shots[Statics.ShootingSelected].Damage;
+
     void LateUpdate()
     {
         #region Move
@@ -92,6 +101,8 @@ public class ControlShip : MonoBehaviour
         }
         #endregion
 
+
+        lifeShield = Statics.Shield;
         #region Tiro
         if(copy)
         {
@@ -140,38 +151,51 @@ public class ControlShip : MonoBehaviour
             if (shooting)
             {
                 Statics.Damage = Shots[Statics.ShootingSelected].Damage;
-                GameObject goShoot = Instantiate(Shots[Statics.ShootingSelected].Prefab, Vector3.zero, Quaternion.identity);
-                goShoot.transform.parent = transform;
+                BulletInfos goShoot = Instantiate(Shots[Statics.ShootingSelected].Prefab, Vector3.zero, Quaternion.identity).GetComponent<BulletInfos>();
+                goShoot.transform.SetParent(transform);
+                goShoot.transform.rotation = transform.rotation;
+
                 goShoot.transform.localPosition = Shots[Statics.ShootingSelected].Weapon.transform.localPosition;
                 goShoot.GetComponent<Rigidbody2D>().AddForce(transform.up * ((Shots[Statics.ShootingSelected].SpeedShooter * 12000f) * Time.deltaTime), ForceMode2D.Impulse);
-                goShoot.AddComponent<BoxCollider2D>();
-                goShoot.transform.parent = transform.parent;
+                goShoot.gameObject.AddComponent<BoxCollider2D>();
+                goShoot.transform.SetParent(transform.parent);
 
-                if(Shots[Statics.ShootingSelected].TypeShooter == Statics.TYPE_SHOT.DOUBLE)
+                goShoot.caster = transform;
+
+
+
+                if (Shots[Statics.ShootingSelected].TypeShooter != Statics.TYPE_SHOT.SIMPLE)
                 {
-                    GameObject goShoot2 = Instantiate(Shots[Statics.ShootingSelected].Prefab, Vector3.zero, Quaternion.identity);
-                    goShoot2.transform.parent = transform;
+                    BulletInfos goShoot2 = Instantiate(Shots[Statics.ShootingSelected].Prefab, Vector3.zero, Quaternion.identity).GetComponent<BulletInfos>();
+                    goShoot2.transform.SetParent(transform);
+                    goShoot2.transform.rotation = transform.rotation;
+
                     goShoot2.transform.localPosition = Shots[Statics.ShootingSelected].Weapon2.transform.localPosition;
                     goShoot2.GetComponent<Rigidbody2D>().AddForce(transform.up * ((Shots[Statics.ShootingSelected].SpeedShooter * 12000f) * Time.deltaTime), ForceMode2D.Impulse);
-                    goShoot2.AddComponent<BoxCollider2D>();
-                    goShoot2.transform.parent = transform.parent;
-                }
+                    goShoot2.gameObject.AddComponent<BoxCollider2D>();
+                    goShoot2.transform.SetParent(transform.parent);
 
-                if (Shots[Statics.ShootingSelected].TypeShooter == Statics.TYPE_SHOT.TRIPLE)
-                {
-                    GameObject goShoot2 = Instantiate(Shots[Statics.ShootingSelected].Prefab, Vector3.zero, Quaternion.identity);
-                    goShoot2.transform.parent = transform;
-                    goShoot2.transform.localPosition = Shots[Statics.ShootingSelected].Weapon2.transform.localPosition;
-                    goShoot2.GetComponent<Rigidbody2D>().AddForce(transform.up * ((Shots[Statics.ShootingSelected].SpeedShooter * 12000f) * Time.deltaTime), ForceMode2D.Impulse);
-                    goShoot2.AddComponent<BoxCollider2D>();
-                    goShoot2.transform.parent = transform.parent;
+                    goShoot2.caster = transform;
 
-                    GameObject goTiro3 = Instantiate(Shots[Statics.ShootingSelected].Prefab, Vector3.zero, Quaternion.identity);
-                    goTiro3.transform.parent = transform;
-                    goTiro3.transform.localPosition = Shots[Statics.ShootingSelected].Weapon3.transform.localPosition;
-                    goTiro3.GetComponent<Rigidbody2D>().AddForce(transform.up * ((Shots[Statics.ShootingSelected].SpeedShooter * 12000f) * Time.deltaTime), ForceMode2D.Impulse);
-                    goTiro3.AddComponent<BoxCollider2D>();
-                    goTiro3.transform.parent = transform.parent;
+
+
+                    if (Shots[Statics.ShootingSelected].TypeShooter == Statics.TYPE_SHOT.TRIPLE)
+                    {
+
+                        BulletInfos goTiro3 = Instantiate(Shots[Statics.ShootingSelected].Prefab, Vector3.zero, Quaternion.identity).GetComponent<BulletInfos>();
+                        goTiro3.transform.SetParent(transform);
+                        goTiro3.transform.rotation = transform.rotation;
+
+                        goTiro3.transform.localPosition = Shots[Statics.ShootingSelected].Weapon3.transform.localPosition;
+                        goTiro3.GetComponent<Rigidbody2D>().AddForce(transform.up * ((Shots[Statics.ShootingSelected].SpeedShooter * 12000f) * Time.deltaTime), ForceMode2D.Impulse);
+                        goTiro3.gameObject.AddComponent<BoxCollider2D>();
+                        goTiro3.transform.SetParent(transform.parent);
+
+                        goTiro3.caster = transform;
+                    }
+
+
+
                 }
             }
 
@@ -184,6 +208,7 @@ public class ControlShip : MonoBehaviour
 
         if(Shield.activeSelf != Statics.WithShield)
         {
+            
             Shield.SetActive(Statics.WithShield);
         }
     }
@@ -197,7 +222,7 @@ public class ControlShip : MonoBehaviour
             
             if (Statics.WithShield)
             {
-                lifeShield--;
+                Statics.Shield --;
             }
             else
             {
@@ -206,24 +231,35 @@ public class ControlShip : MonoBehaviour
 
         }
 
-        if ( obj.gameObject.tag == "Shot" || obj.gameObject.tag == "EnemyShot")
+        if ( (obj.gameObject.tag == "Shot" || obj.gameObject.tag == "EnemyShot") && obj.gameObject.TryGetComponent(out BulletInfos bullet))
         {
+
+
             Instantiate(Explosion, transform);
- 
-            if (Statics.WithShield)
+
+            if (bullet.caster != transform && bullet.caster != Statics.GhostPlayer)
             {
-                lifeShield--;
+                if (Statics.WithShield)
+                {
+
+                    Statics.Shield -- ;
+
+                    
+                }
+                else
+                {
+
+
+                    life.TakesLife(1);
+                }
+                Destroy(obj.gameObject);
             }
-            else
-            {
-                life.TakesLife(1);
-            }
-            Destroy(obj.gameObject);
         }
         
         if(lifeShield <= 0)
         {
             Statics.WithShield = false;
+            Statics.Shield = 0;
         }
     }
    

@@ -1,40 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1312226058062820
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 224588201812696184}
-  m_Layer: 5
-  m_Name: W1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &224588201812696184
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1312226058062820}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 224355981040564188}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.5, y: 65.6}
-  m_SizeDelta: {x: 31.4, y: 30.2}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1543313894704580
 GameObject:
   m_ObjectHideFlags: 0
@@ -52,7 +17,7 @@ GameObject:
   - component: {fileID: 114973004433630584}
   - component: {fileID: 114682910835355004}
   m_Layer: 5
-  m_Name: En5
+  m_Name: Meteor4
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -68,15 +33,14 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children:
-  - {fileID: 224588201812696184}
+  m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 155, y: 0}
-  m_SizeDelta: {x: 59, y: 100}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 120, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &222185077232064414
 CanvasRenderer:
@@ -106,7 +70,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 31c2fa1bcfaafec4c8a92941543f7d54, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 52e96ad1a69533d48ac98a4cdafefe85, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -175,21 +139,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 942ea62c07a4b4949b9c5239a48bc37e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MyType: 1
+  MyType: 0
   _life: {fileID: 114973004433630584}
   Explosion: {fileID: 1381581951848682, guid: d672124717db23c4cb9d2e296564f5fa, type: 3}
   Damage: 1
   shot:
-    Prefab: {fileID: 1214954738911188, guid: b614ba928ce492e44a3352044974dfcf, type: 3}
-    Weapon: {fileID: 1312226058062820}
+    Prefab: {fileID: 0}
+    Weapon: {fileID: 0}
     Weapon2: {fileID: 0}
     Weapon3: {fileID: 0}
     TypeShooter: 0
-    Damage: 1
-    ShootingPeriod: 2
-    SpeedShooter: 5
-  ItemDrop: {fileID: 1381695979528000, guid: b48c06fc82a611144b39630233148d1d, type: 3}
-  dodgeAbility: 1
+    Damage: 0
+    ShootingPeriod: 0
+    SpeedShooter: 0
+  ItemDrop: {fileID: 1381695979528000, guid: 49cd84cca4bf7ef4294a17a1a3c11117, type: 3}
+  dodgeAbility: 0
+  normal: 0
+  dodging: 0
 --- !u!114 &114973004433630584
 MonoBehaviour:
   m_ObjectHideFlags: 0

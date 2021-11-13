@@ -1,10 +1,13 @@
-﻿using System.Collections;
+﻿using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Gaminho;
 using System;
 
 public class Enemy : MonoBehaviour {
+    Collider2D m_col,p_col;Rigidbody2D m_rb;
+
 
     public Statics.TYPE_ENEMY MyType;
     public Life _life;
@@ -15,22 +18,155 @@ public class Enemy : MonoBehaviour {
     public bool dodgeAbility = true;
     public bool normal = true;
 
+    
+
+    [SerializeField] bool dodging = false;
+    [SerializeField] float dodgeSpeed = .5f;
+
     // Use this for initialization
     void Start () {
+        m_rb = GetComponent<Rigidbody2D>();
+        m_col = GetComponent<Collider2D>();
+        p_col = Statics.Player.GetComponent<Collider2D>();
+
         if (MyType == Statics.TYPE_ENEMY.SHIP)
         {
-            StartCoroutine(Shoot());
+            //StartCoroutine(Shoot());
         }
     }
+
+    Vector2 lerpref,dodgeDir,destPos;
+
+    RaycastHit2D predictedImpact;
 
     private void Update()
     {
         if (!Statics.Player) return;
-        if(MyType == Statics.TYPE_ENEMY.SHIP)
+        else
+        {
+            //garante que tera o colisor do Player deedfinido para usar de referencia abaixo
+            if (p_col) p_col = Statics.Player.GetComponent<Collider2D>();
+        }
+        if(MyType == Statics.TYPE_ENEMY.SHIP )
         {
             Quaternion q = Statics.FaceObject(Statics.Player.localPosition, transform.localPosition, Statics.FacingDirection.Right);
             transform.rotation = q;
         }
+
+        float detectionRange = Vector2.Distance(transform.position,Statics.Player.position);
+        float _speedToDodge =  (m_col. bounds.size.x * dodgeSpeed);
+
+
+        RaycastHit2D[] _shotsOnRange = Physics2D.CircleCastAll
+            (transform.position, detectionRange,transform.up)
+                .Where(
+            s=> s.transform.CompareTag("Shot") 
+            && 
+            (s.transform.GetComponent<BulletInfos>().caster== Statics.Player 
+                || s.transform.GetComponent<BulletInfos>().caster== Statics.GhostPlayer))
+                .OrderBy(i=> Vector2.Distance(transform.localPosition,i.transform.localPosition))
+            .ToArray();
+
+        if (!normal && _shotsOnRange.Length > 0) {
+
+            normal = true;
+            Debug.Log("achou um tiro");
+        }
+
+        foreach (var _shot in _shotsOnRange)
+        {
+
+            if (dodgeAbility && _shotsOnRange.Length > 0)
+            {
+
+
+                Rigidbody2D mostNearShot_rb = _shot.rigidbody;
+                Collider2D mostNearShot_col = _shot.collider;
+
+
+
+                if (!dodging)
+                    predictedImpact = Physics2D.Raycast(mostNearShot_rb.transform.position + mostNearShot_rb.transform.up * mostNearShot_col.bounds.extents.y,
+                    mostNearShot_rb.transform.up);
+
+                RaycastHit2D nearBulletCheck = Physics2D.CircleCast(mostNearShot_rb.transform.position + mostNearShot_rb.transform.up * 5f,
+                        5f, mostNearShot_rb.transform.up);
+
+
+                
+                Debug.Log($"on tragetory: {(predictedImpact.transform != null?predictedImpact.transform.name: "nothing")}");
+                
+                    if (predictedImpact.transform!=null && predictedImpact.transform == transform)
+                    {
+                        //if (!dodging)
+                        //{
+                            dodgeDir = transform.InverseTransformPoint(predictedImpact.point);
+                            Debug.Log($"{transform.name} na trajetoria do tiro, iniciando Dodge...");
+
+                        //}
+
+                    
+
+                    destPos = transform.position +
+                           transform.right * (p_col.bounds.size.x * 2f)
+                           +
+                           (transform.up * 1.35f)
+                           ;
+
+
+
+
+                    
+                    destPos = transform.parent.InverseTransformPoint(destPos);
+                        
+
+                        dodging = true;
+
+                    }
+                    else if (nearBulletCheck.transform == transform)
+                    {
+                        //if (!dodging)
+                        //{
+                            dodgeDir = transform.InverseTransformPoint(nearBulletCheck.point);
+                            Debug.Log($"{transform.name} na trajetoria do tiro, iniciando Dodge...");
+
+                        //}
+
+                    
+
+
+                    destPos = transform.position +
+                           transform.right * (p_col.bounds.size.x * 2f)
+                           +
+                           (transform.up * 1.35f)
+                           ;
+
+
+                    destPos = transform.parent.InverseTransformPoint(destPos);
+                        //}
+
+                        dodging = true;
+                    }
+                //}
+
+
+            }
+            else dodging = false;
+        }
+
+        if (dodging)
+        {
+            transform.localPosition =
+                            Vector2.SmoothDamp(
+                                transform.localPosition,
+                                destPos, ref lerpref,
+                                _speedToDodge * Time.deltaTime);
+
+            Transform _e = Physics2D.CircleCast(predictedImpact.point, 2f, transform.up).transform;
+            dodging = _e != null && _e.transform == transform;
+
+        }
+        else predictedImpact = new RaycastHit2D();
     }
 
     private void OnCollisionEnter2D(Collision2D objeto)
@@ -38,10 +174,10 @@ public class Enemy : MonoBehaviour {
         
         if (objeto.gameObject.tag == "Shot")
         {
-
+            if (MyType == Statics.TYPE_ENEMY.SHIP) Debug.Log("Morri!");
             Destroy(objeto.gameObject);
             _life.TakesLife(Statics.Damage);
-            Instantiate(Explosion, transform).transform.parent = transform.parent;
+            Instantiate(Explosion, transform).transform.SetParent(transform.parent); 
         }
     }
 
@@ -107,39 +243,56 @@ public class Enemy : MonoBehaviour {
             yield return new WaitForSeconds(shot.ShootingPeriod);
             
                 Statics.Damage = shot.Damage;
-                GameObject goShooter = Instantiate(shot.Prefab, Vector3.zero, Quaternion.identity);
-                goShooter.transform.parent = transform;
-                goShooter.transform.localPosition = shot.Weapon.transform.localPosition;
-                goShooter.GetComponent<Rigidbody2D>().AddForce(transform.up * ((shot.SpeedShooter * 82000f) * Time.deltaTime), ForceMode2D.Impulse);
-                goShooter.AddComponent<BoxCollider2D>();
-                goShooter.transform.parent = transform.parent;
+                BulletInfos goShooter = Instantiate(shot.Prefab, Vector3.zero, Quaternion.identity).GetComponent<BulletInfos>();
+                goShooter.transform.SetParent(transform);
+            goShooter.transform.localEulerAngles = Vector2.zero;
+            goShooter.caster = transform;
+
+            goShooter.transform.transform.rotation = transform.rotation;
+            goShooter.GetComponent<Rigidbody2D>().AddForce(transform.up * ((shot.SpeedShooter * 82000f) * Time.deltaTime), ForceMode2D.Impulse);
+                goShooter.gameObject.AddComponent<BoxCollider2D>();
+                goShooter.transform.SetParent(transform.parent);
 
                 if (shot.TypeShooter == Statics.TYPE_SHOT.DOUBLE)
                 {
-                    GameObject goShooter2 = Instantiate(shot.Prefab, Vector3.zero, Quaternion.identity);
-                    goShooter2.transform.parent = transform;
-                    goShooter2.transform.localPosition = shot.Weapon2.transform.localPosition;
+                    BulletInfos goShooter2 = Instantiate(shot.Prefab, Vector3.zero, Quaternion.identity).GetComponent<BulletInfos>();
+                    goShooter2.transform.SetParent(transform);
+                goShooter2.transform.rotation = transform.rotation;
+                goShooter2.caster = transform;
+
+
+                goShooter2.transform.localPosition = shot.Weapon2.transform.localPosition;
                     goShooter2.GetComponent<Rigidbody2D>().AddForce(transform.up * ((shot.SpeedShooter * 82000f) * Time.deltaTime), ForceMode2D.Impulse);
-                    goShooter2.AddComponent<BoxCollider2D>();
-                    goShooter2.transform.parent = transform.parent;
-                }
+                    goShooter2.gameObject.AddComponent<BoxCollider2D>();
+                goShooter2.transform.SetParent(transform.parent);
+            }
 
                 if (shot.TypeShooter == Statics.TYPE_SHOT.TRIPLE)
                 {
-                    GameObject goShooter2 = Instantiate(shot.Prefab, Vector3.zero, Quaternion.identity);
-                    goShooter2.transform.parent = transform;
-                    goShooter2.transform.localPosition = shot.Weapon2.transform.localPosition;
-                    goShooter2.GetComponent<Rigidbody2D>().AddForce(transform.up * ((shot.SpeedShooter * 82000f) * Time.deltaTime), ForceMode2D.Impulse);
-                    goShooter2.AddComponent<BoxCollider2D>();
-                    goShooter2.transform.parent = transform.parent;
+                    BulletInfos goShooter2 = Instantiate(shot.Prefab, Vector3.zero, Quaternion.identity).GetComponent<BulletInfos>();
+                goShooter2.transform.SetParent(transform);
+                goShooter2.transform.rotation = transform.rotation;
+                goShooter2.caster = transform;
 
-                    GameObject goShooter3 = Instantiate(shot.Prefab, Vector3.zero, Quaternion.identity);
-                    goShooter3.transform.parent = transform;
-                    goShooter3.transform.localPosition = shot.Weapon3.transform.localPosition;
-                    goShooter3.GetComponent<Rigidbody2D>().AddForce(transform.up * ((shot.SpeedShooter * 82000f) * Time.deltaTime), ForceMode2D.Impulse);
-                    goShooter3.AddComponent<BoxCollider2D>();
-                    goShooter3.transform.parent = transform.parent;
-                }
+
+                goShooter2.transform.localPosition = shot.Weapon2.transform.localPosition;
+                    goShooter2.GetComponent<Rigidbody2D>().AddForce(transform.up * ((shot.SpeedShooter * 82000f) * Time.deltaTime), ForceMode2D.Impulse);
+                    goShooter2.gameObject.AddComponent<BoxCollider2D>();
+                goShooter2.transform.SetParent(transform.parent);
+
+
+                BulletInfos goShooter3 = Instantiate(shot.Prefab, Vector3.zero, Quaternion.identity).GetComponent<BulletInfos>();
+                goShooter3.transform.SetParent(transform);
+
+                goShooter3.transform.rotation = transform.rotation;
+
+                goShooter3.transform.localPosition = shot.Weapon3.transform.localPosition;
+                goShooter3.caster = transform;
+
+                goShooter3.GetComponent<Rigidbody2D>().AddForce(transform.up * ((shot.SpeedShooter * 82000f) * Time.deltaTime), ForceMode2D.Impulse);
+                    goShooter3.gameObject.AddComponent<BoxCollider2D>();
+                goShooter3.transform.SetParent(transform.parent);
+            }
         }
     }
 
