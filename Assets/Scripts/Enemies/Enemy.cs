@@ -15,6 +15,7 @@ public class Enemy : MonoBehaviour {
     public int Damage = 1;
     public Shot shot;
     public GameObject ItemDrop;
+
     public bool dodgeAbility = true;
     public bool normal = true;
 
@@ -44,7 +45,7 @@ public class Enemy : MonoBehaviour {
         if (!Statics.Player) return;
         else
         {
-            //garante que tera o colisor do Player deedfinido para usar de referencia abaixo
+            // guarantee you will have the Player collider set to reference below
             if (p_col) p_col = Statics.Player.GetComponent<Collider2D>();
         }
         if(MyType == Statics.TYPE_ENEMY.SHIP )
@@ -53,10 +54,22 @@ public class Enemy : MonoBehaviour {
             transform.rotation = q;
         }
 
+#region DodgeSystem
+
+
+        //take the range from the distanceecec between enemy and Player,
+        //and calculate speed to Dodge from his collideedr size;
+        //from this way, other ships can dodge too, but how much bigger it is, more slowly he will be.
+
+        //for obvious reasons, i shoose the less enemy for this task
+
         float detectionRange = Vector2.Distance(transform.position,Statics.Player.position);
         float _speedToDodge =  (m_col. bounds.size.x * dodgeSpeed);
 
-
+        //calculate from Circlecast all the bullets on range, filtering from his tag, and who shooted this bullet,
+        //from a script that i made just with this property to make it much easy...
+        //This way Player can not hit, but others can
+        //obs: i added Ghost of player too, or will causes the impression of hit him.
         RaycastHit2D[] _shotsOnRange = Physics2D.CircleCastAll
             (transform.position, detectionRange,transform.up)
                 .Where(
@@ -70,12 +83,14 @@ public class Enemy : MonoBehaviour {
         if (!normal && _shotsOnRange.Length > 0) {
 
             normal = true;
-            Debug.Log("achou um tiro");
+            
         }
 
+
+        //run from all bullets finded...
         foreach (var _shot in _shotsOnRange)
         {
-
+            //but just execute if is NOT on Dodge action yet
             if (dodgeAbility && _shotsOnRange.Length > 0)
             {
 
@@ -84,37 +99,39 @@ public class Enemy : MonoBehaviour {
                 Collider2D mostNearShot_col = _shot.collider;
 
 
-
+                //madedede a second Raycas but this time from the bullet to enemy to check if will hit him.
                 if (!dodging)
                     predictedImpact = Physics2D.Raycast(mostNearShot_rb.transform.position + mostNearShot_rb.transform.up * mostNearShot_col.bounds.extents.y,
                     mostNearShot_rb.transform.up);
-
+                //and make a circe cast with considedederable range on hit point, in this way,
+                //the enemy sill dodging while it is on range
                 RaycastHit2D nearBulletCheck = Physics2D.CircleCast(mostNearShot_rb.transform.position + mostNearShot_rb.transform.up * 5f,
                         5f, mostNearShot_rb.transform.up);
 
 
                 
                 Debug.Log($"on tragetory: {(predictedImpact.transform != null?predictedImpact.transform.name: "nothing")}");
-                
+                //check if the hitted object is this...
                     if (predictedImpact.transform!=null && predictedImpact.transform == transform)
                     {
                         //if (!dodging)
                         //{
-                            dodgeDir = transform.InverseTransformPoint(predictedImpact.point);
-                            Debug.Log($"{transform.name} na trajetoria do tiro, iniciando Dodge...");
+                            dodgeDir = transform.InverseTransformPoint(predictedImpact.point).normalized;
+                            
 
                         //}
 
                     
-
+                    //generate a position from the best and mos  closes side to dodge based on simulated local position
+                    //of predicted hit point
                     destPos = transform.position +
-                           transform.right * (p_col.bounds.size.x * 2f)
+                           transform.right * (p_col.bounds.size.x * ( dodgeDir.x>0? 2f:-2f ))
                            +
-                           (transform.up * 1.35f)
+                           (transform.up * -1.35f)
                            ;
 
 
-
+                    //and turn it on local position based on parent.
 
                     
                     destPos = transform.parent.InverseTransformPoint(destPos);
@@ -153,7 +170,7 @@ public class Enemy : MonoBehaviour {
             }
             else dodging = false;
         }
-
+        //apply dodge with SmoothDump, for a most constant and linear interpolation.
         if (dodging)
         {
             transform.localPosition =
@@ -167,6 +184,8 @@ public class Enemy : MonoBehaviour {
 
         }
         else predictedImpact = new RaycastHit2D();
+
+        #endregion
     }
 
     private void OnCollisionEnter2D(Collision2D objeto)

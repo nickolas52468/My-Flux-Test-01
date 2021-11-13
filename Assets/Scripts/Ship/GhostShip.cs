@@ -36,6 +36,8 @@ public class GhostShip : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
+
+        //Here i just apply a SmoothDump to the GhostPlayer too, for a good effect... i realy like the result..
         if(!shooting && Statics.Player)
         {
             m_player = Statics.Player.GetComponent<ControlShip>();

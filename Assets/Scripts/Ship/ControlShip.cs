@@ -101,25 +101,16 @@ public class ControlShip : MonoBehaviour
         }
         #endregion
 
-
+        //now the shieldLife is one of Statics, to be accessible from ther classes
         lifeShield = Statics.Shield;
         #region Tiro
-        if(copy)
-        {
-            timeRemaining -= 1;
-            if(timeRemaining < 0)
-            {
-                shooting = true;
-            }
-            else
-            {
-                timeRemaining = 60 * Time.deltaTime;
-                shooting = false;
-            }
-        }
-        else
-        {
-            if (Input.GetKeyDown(KeyCode.LeftControl))
+
+        // I took some code that looks like madeedd for a copy of the ship whit same code....
+        // in general, some codes was ready-made, but I decided to take it out 
+        // and do it myself, on my way
+
+
+        if (Input.GetKeyDown(KeyCode.LeftControl))
             {
                 shooting = true;
             }
@@ -127,7 +118,7 @@ public class ControlShip : MonoBehaviour
             {
                 shooting = false;
             }
-        }
+        
 
         #endregion
 
@@ -145,6 +136,8 @@ public class ControlShip : MonoBehaviour
 
     private IEnumerator Shoot()
     {
+
+        //i did a little  change to minimize some repeating codes
         while (true)
         {
             yield return new WaitForSeconds(Shots[Statics.ShootingSelected].ShootingPeriod);
